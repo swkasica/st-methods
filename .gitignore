@@ -1,3 +1,6 @@
 
 .DS_Store
 .Rproj.user
+*.RData
+*.Rhistory
+1805-regionen im fokus des US-praesidenten/data/
