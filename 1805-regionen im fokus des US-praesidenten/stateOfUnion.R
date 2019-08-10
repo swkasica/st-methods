@@ -8,10 +8,11 @@ library(sotu)
 library(tm)
 library(ggplot2)
 library(countrycode)
+library(psData)  # loads countrycode_data
 library(tidyr)
 library(directlabels)
 
-setwd("mypath/graphics")
+# setwd("mypath/graphics")
 
 
 #---------------------------------------------------------------------------------------------------------------------
@@ -21,43 +22,42 @@ length(sotu_text)
 head(sotu_text)
 
 # write all sotu-addresses to directory
-sotu_dir("mypath/data/sotu_originals", filenames)
+sotu_dir("data/sotu_originals")
 
 
 #------------------------------------------------------------------------------------------------------------------------------------------------
 ### CORPUS CREATION AND PROCESSING ###
 
 # Read in as corpus
-directoryIn<-"mypath/data/sotu_red_augm"
+directoryIn<-"data/sotu_originals"
 docs<-Corpus(DirSource(directoryIn, encoding = "UTF-8"), readerControl = list(language = "eng"))
-
 
 ## Create different corpora containing different types of information
 
 # Corpus 1: keep punctuation but remove whitespace
 corpus1<-tm_map(docs, stripWhitespace)
-directoryOut<-"mypath/data/sotu_corpus1"
+directoryOut<-"data/sotu_corpus1"
 writeCorpus(corpus1, path=directoryOut, filenames=paste0(substr(dir(directoryIn), 1, nchar(dir(directoryIn))-4),".txt",sep=""))
 
-# Corpus 2: remove punctuation and whitespace and convert to lowercase to count words, and for concept and frequent word analysis
+ # Corpus 2: remove punctuation and whitespace and convert to lowercase to count words, and for concept and frequent word analysis
 corpus2<-tm_map(docs, removePunctuation, preserve_intra_word_dashes = TRUE)
 corpus2<-tm_map(corpus2, stripWhitespace)
 corpus2<-tm_map(corpus2, content_transformer(tolower))
-directoryOut<-"mypath/data/sotu_corpus2"
+directoryOut<-"data/sotu_corpus2"
 writeCorpus(corpus2, path=directoryOut, filenames=paste0(substr(dir(directoryIn), 1, nchar(dir(directoryIn))-4),".txt",sep=""))
 
 # Corpus 3: additionally stemmed and stopped
 corpus3<-tm_map(corpus2, removeWords, stopwords("english"))
 corpus3<-tm_map(corpus3, stemDocument, language = "english") 
-directoryOut<-"mypath/data/sotu_corpus3"
+directoryOut<-"data/sotu_corpus3"
 writeCorpus(corpus3, path=directoryOut, filenames=paste0(substr(dir(directoryIn), 1, nchar(dir(directoryIn))-4),".txt",sep=""))
 
 
 ## Create metadata frame
 
 # to count words and characters, read in these files again with scan, which creates a vector with one-word-one-element
-txtCleanCorpus <- list.files(path="mypath/data/sotu_corpus2/", pattern="*.txt", full.names=F, recursive=FALSE)
-directoryCorpus2<-"mypath/data/sotu_corpus2/"
+txtCleanCorpus <- list.files(path="data/sotu_corpus2/", pattern="*.txt", full.names=F, recursive=FALSE)
+directoryCorpus2<-"data/sotu_corpus2/"
 
 # build metadata from filenames and sotu_meta
 filename<-unlist(lapply(strsplit(as.character(txtCleanCorpus), "\\."),'[[', 1))
@@ -114,12 +114,13 @@ ggplot(metadata, aes(as.numeric(as.character(year)),nWords)) +
 #------------------------------------------------------------------------------------------------------------------------------------------------
 ### ANALYSIS COUNTRIES AND REGIONS ###
 
+# Run stateOfUnion.sh here
 
 ## AMERICA
-americPerFile<-read.table("mypath/data/datafiles/americUSPerFile.txt", sep="\t")
+americPerFile<-read.table("data/datafiles/americUSPerFile.txt", sep="\t")
 colnames(americPerFile)<-c("file", "americ", "ourRepublic", "our_federalUnion", "US")
 metadata_america<-metadata %>% 
-  as.tibble(.) %>% 
+  as_tibble(.) %>% 
   mutate(americ=100*(americPerFile$americ/nWords)) %>% 
   mutate(ourRepublic=100*(americPerFile$ourRepublic/nWords)) %>% 
   mutate(our_federalUnion=100*(americPerFile$our_federalUnion/nWords)) %>% 
@@ -149,19 +150,19 @@ summary(countrycode_data)
 unique(countrycode_data$region)
 countrycode_data$country.name.en
 
-grepCountriesForBash<-paste0("&& grep -o", " '", countrycode_data$country.name.en.regex, "' ", "$file | wc -l | tr -d 'XXX' && printf \"YYY\" \\")
+grepCountriesForBash<-paste0("&& grep -o", " '", countrycode_data$country.name, "' ", "$file | wc -l | tr -d 'XXX' && printf \"YYY\" \\")
 
-write.table(grepCountriesForBash, file="mypath/analysis/grepCountries.txt", row.names=F, quote=F, fileEncoding="UTF-8")
+write.table(grepCountriesForBash, file="analysis/grepCountries.txt", row.names=F, quote=F, fileEncoding="UTF-8")
 ### CAREFUL: REPLACE XXX BY \n IN THE .TXT FILE and YYY BY \t. THEN TRANSFORM INTO BASH-SCRIPT stateOfUnion.sh
 ### CAREFUL 2: THERE WAS A LOT OF HAND-CLEANING AND -AUGMENTING IN THE BASH-SCRIPT BELONGING TO THIS
 
 # see bash-script for text analysis
 
 # read in countries-per-file, regions-per-file and define colnames
-countriesPerFile<-read.table("mypath/data/datafiles/countriesPerFileC2.txt", sep="\t")
-colnames(countriesPerFile)<-c("file", countrycode_data$country.name.en)
+countriesPerFile<-read.table("data/datafiles/countriesPerFileC2.txt", sep="\t")
+colnames(countriesPerFile)<-c("file", countrycode_data$country.name)
 
-regionsPerFile<-read.table("mypath/data/datafiles/regionsPerFileC2.txt", sep="\t")
+regionsPerFile<-read.table("data/datafiles/regionsPerFileC2.txt", sep="\t")
 colnames(regionsPerFile)<-c("file", "asiaPacific", "europe", "africa", "polynesia", "caribbean", "southAmerica", "northAmerica", "middleNearEast", "southAsia")
 
 #replace the US-column in countriesPerFile by the row sums of americPerFile, because this was counted in a methodologically cleaner way (corpus 1, including 'US' but not 'us')
@@ -229,10 +230,10 @@ sort(countryTotals, decreasing = T)
 
 #the 20 most frequent countries 
 frequentCountries<-data.frame(countriesPerFile$file,
-                              countriesPerFile$`United States of America`, 
-                              countriesPerFile$Mexico, 
-                              countriesPerFile$`United Kingdom of Great Britain and Northern Ireland`, 
-                              countriesPerFile$Spain, 
+                              countriesPerFile$`United States of America`,
+                              countriesPerFile$Mexico,
+                              countriesPerFile$`United Kingdom`,
+                              countriesPerFile$Spain,
                               countriesPerFile$`Russian Federation`,
                               countriesPerFile$France,
                               countriesPerFile$China,
@@ -242,9 +243,9 @@ frequentCountries<-data.frame(countriesPerFile$file,
                               countriesPerFile$Panama,
                               countriesPerFile$Iraq,
                               countriesPerFile$Nicaragua,
-                              countriesPerFile$`Iran (Islamic Republic of)`,
+                              countriesPerFile$`Iran, Islamic Republic Of`,
                               countriesPerFile$Korea,
-                              countriesPerFile$`Viet Nam`,
+                              countriesPerFile$Vietnam,
                               countriesPerFile$Brazil,
                               countriesPerFile$Canada,
                               countriesPerFile$Afghanistan,
@@ -440,13 +441,14 @@ ggplot(trump, aes(country,cntrySum)) +
   ggtitle("Donald J. Trump")+
   ylab("Anzahl Erwähnungen")+
   theme_minimal() +
-  theme(axis.text.y=element_text(family="GT America", color="#05032d", size=11),
-        axis.text.x=element_text(family="GT America", color="#05032d", size=11, angle=90),
+  theme(
+    # axis.text.y=element_text(family="GT America", color="#05032d", size=11),
+      #  axis.text.x=element_text(family="GT America", color="#05032d", size=11, angle=90),
         axis.title.x=element_blank(),
-        axis.title.y=element_text(family="GT America", color="#05032d", size=13),
-        plot.title = element_text(family="GT America", color="#05032d", size=20), 
-        plot.subtitle = element_text(family="GT America", color="#05032d", size=10, hjust=-0.1),
-        plot.caption = element_text(family="GT America", color="#05032d", size=10, hjust=-0.1, vjust=-3),
+#        axis.title.y=element_text(family="GT America", color="#05032d", size=13),
+#        plot.title = element_text(family="GT America", color="#05032d", size=20), 
+#        plot.subtitle = element_text(family="GT America", color="#05032d", size=10, hjust=-0.1),
+#        plot.caption = element_text(family="GT America", color="#05032d", size=10, hjust=-0.1, vjust=-3),
         panel.grid = element_line(color="#ececf0", size=.3),
         plot.margin=unit(c(1,1,1.5,1.2),"cm")) 
 ggsave("trump.svg")

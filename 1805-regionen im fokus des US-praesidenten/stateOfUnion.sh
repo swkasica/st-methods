@@ -3,16 +3,14 @@
 
 
 #USA per file, corpus 1 because we also want caps for US (vs. us-pronoun)
-cd mypath/data/sotu_corpus1
-for file in $(ls -1 |grep -i .txt ) ; do printf "$file\t" \
+for file in $(ls -1d data/sotu_corpus1/*.txt) ; do printf "$file\t" \
 && egrep -o 'americ|Americ' $file | wc -l | tr -d '\n' && printf "\t" \
 && egrep -o 'our republic|our Republic' $file | wc -l | tr -d '\n' && printf "\t" \
 && egrep -o 'our union|our Union|federal union|federal Union' $file | wc -l | tr -d '\n' && printf "\t" \
-&& egrep -o 'united states|United States|\<US\>|\<USA\>|\<usa\>' $file | wc -l; done  > mypath/data/datafiles/americUSPerFile.txt
+&& egrep -o 'united states|United States|\<US\>|\<USA\>|\<usa\>' $file | wc -l; done  > data/datafiles/americUSPerFile.txt
 
 #countries per file
-cd mypath/data/sotu_corpus2
-for file in $(ls -1 |grep -i .txt ) ; do printf "$file\t" \
+for file in $(ls -1d data/sotu_corpus2/*.txt ) ; do printf "$file\t" \
 && grep -o 'afghan' $file | wc -l | tr -d '\n' && printf "\t" \
 && grep -o '\<aland' $file | wc -l | tr -d '\n' && printf "\t" \
 && grep -o 'albania' $file | wc -l | tr -d '\n' && printf "\t" \
@@ -285,11 +283,10 @@ for file in $(ls -1 |grep -i .txt ) ; do printf "$file\t" \
 && grep -o 'yugoslavia' $file | wc -l | tr -d '\n' && printf "\t" \
 && egrep -o 'zambia|rhodesia' $file | wc -l | tr -d '\n' && printf "\t" \
 && grep -o 'zanzibar' $file | wc -l | tr -d '\n' && printf "\t" \
-&& egrep -o 'zimbabwe|rhodesia' $file | wc -l; done  > mypath/data/datafiles/countriesPerFileC2.txt
+&& egrep -o 'zimbabwe|rhodesia' $file | wc -l; done  > data/datafiles/countriesPerFileC2.txt
 
 #regions per file
-cd mypath/data/sotu_corpus2
-for file in $(ls -1 |grep -i .txt ) ; do printf "$file\t" \
+for file in $(ls -1d data/sotu_corpus2/*.txt ) ; do printf "$file\t" \
 && egrep -o '\<asia\>|in the pacific|pacific ocean|pacific countr|pacific area|on the pacific|of the pacific|atlantic and pacific|pacific coast|pacific railroad|norht pacific' $file | wc -l | tr -d '\n' && printf "\t" \
 && grep -o '\<europ' $file | wc -l | tr -d '\n' && printf "\t" \
 && grep -o 'africa' $file | wc -l | tr -d '\n' && printf "\t" \
@@ -298,5 +295,5 @@ for file in $(ls -1 |grep -i .txt ) ; do printf "$file\t" \
 && egrep -o '\<south.america|southern.america|latin.america|western.hemisphere' $file | wc -l | tr -d '\n' && printf "\t" \
 && egrep -o 'north.america|northern america' $file | wc -l | tr -d '\n' && printf "\t" \
 && egrep -o 'middle.east|near.east' $file | wc -l | tr -d '\n' && printf "\t" \
-&& grep -o 'south.asia' $file | wc -l; done  > mypath/data/datafiles/regionsPerFileC2.txt
+&& grep -o 'south.asia' $file | wc -l; done  > data/datafiles/regionsPerFileC2.txt
 
